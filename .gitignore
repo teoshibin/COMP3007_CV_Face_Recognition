@@ -1,4 +1,4 @@
 FaceDatabase
 FaceDatabase/*
-Weights
-Weights/*
+Weights/**/*.mat
+Weights/**/*.h5
