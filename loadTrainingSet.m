@@ -8,9 +8,16 @@ imgSet=zeros(600,600,3,maxImage); % all images are 3 channels with size of 600x6
 personID=[]; % the folder names are the labels
 k=1;
 for i=1:length(folderNames)
-    imgName=dir([imgPath, folderNames(i,:).name,'\*.jpg']);
+    
+    % dir sometimes return these dots, added a quick fix here to avoid
+    % wrong concatination
+    if strcmp(folderNames(i,:).name, ".") || strcmp(folderNames(i,:).name, "..")
+       continue 
+    end
+    
+    imgName=dir(strcat(imgPath, folderNames(i,:).name, filesep,'*.jpg'));
     if ~isempty(imgName)
-        imgSet(:,:,:,k)= imread([imgPath, folderNames(i,:).name, '\', imgName.name]);
+        imgSet(:,:,:,k)= imread(strcat(imgPath, folderNames(i,:).name, filesep, imgName.name));
         personID=[personID; folderNames(i,:).name];  %the folder names are the persons IDs. 
         k=k+1;
     end
