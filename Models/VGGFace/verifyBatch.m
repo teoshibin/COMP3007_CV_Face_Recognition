@@ -4,11 +4,15 @@ function result = verifyBatch(model, batch1, batch2, isEmbedded, similarity_metr
         model dlnetwork
         batch1 dlarray
         batch2 dlarray
-        isEmbedded (1,2) logical = [1 1]
-        similarity_metric (1,:) char = 'euclidean'
+        isEmbedded (1,2) logical
+        similarity_metric (1,:) char
     end
 
     if strcmp(similarity_metric, 'euclidean')
+        threshold = 0.6;
+    elseif strcmp(similarity_metric, 'euclidean_l2')
+        threshold = 0.86;
+    elseif strcmp(similarity_metric, 'cosine')
         threshold = 0.4;
     end
     
@@ -32,7 +36,8 @@ function result = verifyBatch(model, batch1, batch2, isEmbedded, similarity_metr
     for i = 1:size(batch1,4)
         result(i).distance = distance( ...
             gather(extractdata(embedding1(:,:,:,i))), ...
-            gather(extractdata(embedding2(:,:,:,i))) ...
+            gather(extractdata(embedding2(:,:,:,i))), ...
+            similarity_metric ...
         );
         result(i).similarity_metric = similarity_metric;
         result(i).threshold = threshold;
