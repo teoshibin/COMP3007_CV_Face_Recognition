@@ -16,7 +16,7 @@ testPath = char(fullfile(faceDatasetPath, "Test",filesep));
 
 [trainImgSet, trainPersonID]=loadTrainingSet(trainPath); % load training images
 
-%% Template Matching (Baseline Method)
+%% BASELINE Template Matching
 
 load testLabel;
 tic;
@@ -24,46 +24,19 @@ outputID = templateMatching(trainImgSet, trainPersonID, testPath);
 runTime = toc
 recAccuracy = matchID(outputID, testLabel)
 
-%% VGGFace with euclidean distance
-
-paramsPath = fullfile("Weights","VGGFace","params.mat");
-
-load testLabel;
-tic;
-outputID = VGGFaceIdentify(trainImgSet, trainPersonID, testPath, paramsPath, "euclidean");
-methodNewTime = toc
-recAccuracyNew = matchID(outputID, testLabel)
-
-%% VGGFace with cosine similarity
+%% METHOD2 VGGFace with cosine similarity
 
 paramsPath = fullfile("Weights","VGGFace","params.mat");
 
 load testLabel;
 tic;
 outputID = VGGFaceIdentify(trainImgSet, trainPersonID, testPath, paramsPath, "cosine");
-methodNewTime2 = toc
-recAccuracyNew2 = matchID(outputID, testLabel)
+methodNewTime = toc
+recAccuracyNew = matchID(outputID, testLabel)
 
-%% VGGFace with l2 norm euclidean distance
-
-paramsPath = fullfile("Weights","VGGFace","params.mat");
-
-load testLabel;
-tic;
-outputID = VGGFaceIdentify(trainImgSet, trainPersonID, testPath, paramsPath, "euclidean_l2");
-methodNewTime3 = toc
-recAccuracyNew3 = matchID(outputID, testLabel)
-
-%% Compare baseline and my best
+%% Compare baseline and method2
 
 Name = ["Template Matching"; "VGGFace Cosine"];
-Time = [runTime; methodNewTime2];
-Accuracy = [recAccuracy; recAccuracyNew2];
-table(Name, Time, Accuracy)
-
-%% Compare all
-
-Name = ["Template Matching"; "VGGFace Euclidean"; "VGGFace Cosine"; "VGGFace Euclidean l2"];
-Time = [runTime; methodNewTime; methodNewTime2; methodNewTime3];
-Accuracy = [recAccuracy; recAccuracyNew; recAccuracyNew2; recAccuracyNew3];
-table(Name, Time, Accuracy)
+Time = [runTime; methodNewTime];
+Accuracy = [recAccuracy; recAccuracyNew];
+tb = table(Name, Time, Accuracy)

@@ -1,4 +1,4 @@
-function table = readPeopleText(path)
+function table = readLFWPeopleTxt(path)
 % This reads a text file regarding details of the subjects within LFW dataset
 % This is needed to generate pairs of images for training
 
