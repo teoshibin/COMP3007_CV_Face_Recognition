@@ -1,7 +1,9 @@
-function precomputeDatabase(imds, outputPath, dlModel, preprocessFunc, batchSize, skipNum, skipDirCheck, saveOverwrite, varargin)
+function precomputeDatabase(imds, outputPath, dlModel, preprocessFunc, batchSize, varargin)
 % compute embeddings for entire image dataset and save them to a new location
 % this function assumes only 1 level of subfolder exist within the database
-% 
+%
+%   STANDARD ARGUMENTS
+%
 %   imds            - imageDatastore object of intput images
 %                     dataset structure : rootFolder > classFolder > images
 % 
@@ -12,33 +14,35 @@ function precomputeDatabase(imds, outputPath, dlModel, preprocessFunc, batchSize
 %   preprocessFunc  - preprocess function, executed on input data before
 %                     feeding into dlModel, the function must be able to
 %                     process data in batch
-% 
 %   batchSize       - feed foward batch size (larger is faster, require more memory)
-% 
-%   skipNum         - to skip n numbers of images within imds
-%                     if batchSize is changed, skipNum will skip according
-%                     to the new batchSize, it will redo a small portion of
-%                     work
-%                     (this is here to save the day when error occurs after 
-%                      a good portion of work is done)
-% 
-%   skipDirCheck    - skip directories generation (to enhance speed if
-%                     folders already exist)
-% 
-%   varargin        - preprocess function input arguments
 %
-%   Examples:
+%   varargin        - apart from name and value pairs the remaining arguments 
+%                     are all preprocess function input arguments
+%
+%   VARARGIN NAME AND VALUE PAIR
+% 
+%   'skipDirCheck'  - toggle directories generation, default to false (to
+%                     enhance speed if you know that folder already exist)
+%
+%   'saveOverwrite' - toggle overwrite, default to false. false will
+%                     prevent re-embedding of embedded images. true will
+%                     embed the entire dataset regardless of anything.
+%                     (when this is false, previous half done job will 
+%                     simply be continued without starting all over again)
+%
+%   EXAMPLE:
 %               imdsTrain = imageDatastore(datasetPath, ...
 %                   "IncludeSubfolders",true, ...
 %                   "LabelSource","foldernames");
 %               model = loadMyModel(paramsPath);
 %
-%               precomputeDatabase(imdsTrain, encodedDatasetPath, model, @normalize, 32, 12680, true);
+%               precomputeDatabase(imdsTrain, encodedDatasetPath, model, @normalizeImage, 4);
 %               
-%               This will start encoding images from 12672 (multiple of 32, 
-%               this is automatically calculated and used instead of 12680)
-%               with the batch size of 32 while ignoring folder generation 
-%               at the beginning
+%               This will start embedding images that are yet to be
+%               embedded with a batch size of 4. If halted due to error or 
+%               cancellation, re-running it will simply continue where it 
+%               left off.
+%
 
     arguments
         imds
@@ -46,26 +50,32 @@ function precomputeDatabase(imds, outputPath, dlModel, preprocessFunc, batchSize
         dlModel dlnetwork
         preprocessFunc
         batchSize double {mustBePositive(batchSize)}
-        skipNum double = 0
-        skipDirCheck logical = false
-        saveOverwrite logical = false
     end
     arguments(Repeating)
         varargin
     end
 
     %% prepare arguments
-    argNames = ['skipImages','skipDirCheck','saveOverwrite'];
     
-    skipNum = 0;
+%     skipNum = 0;
     skipDirCheck = false;
     saveOverwrite = false;
+    remainingArg = {};
     for i = 1:2:length(varargin)
-        if any(ismember(argNames, varargin{i}),"all")
-            config.(varargin{i}) = vararigin{i+1};
+        if strcmp(varargin{i},"skipDirCheck")
+            skipDirCheck = varargin{i+1};
+        elseif strcmp(varargin{i},"saveOverwrite")
+            saveOverwrite = varargin{i+1};
+        else
+            remainingArg = varargin(i:end);
+            break
         end
     end
         
+    %% global variables
+    
+    imageNum = length(imds.Files);
+    
     %% prepare output file paths and names
 
     % e.g. ...{'classfolder'}{'filenames.jpg'}
@@ -82,17 +92,22 @@ function precomputeDatabase(imds, outputPath, dlModel, preprocessFunc, batchSize
     classfolders = parts(:, end-1);
     uniqueClassfolders = unique(classfolders);
 
+    % e.g. all outputPaths
+    cellOutputPaths = cell(imageNum,1);
+    cellOutputPaths(:) = {char(outputPath)};
+    outputPaths = join([cellOutputPaths,classfolders,outFilenames], filesep);
+    
 
     %% progress bar
 
-    f = waitbar(0,sprintf("[1/2] Generating Directories\n \n "),"Name","Precompute Database",...
+    f = waitbar(0,sprintf("[1/2] Generating Directories\n \n \n "),"Name","Precompute Database",...
         'CreateCancelBtn','setappdata(gcbf,''canceling'',1)');
     setappdata(f,'canceling',0);
 
-
-    if ~skipDirCheck    
-        %% generate directories and subdirectories
-
+    
+    %% generate directories and subdirectories
+    
+    if ~skipDirCheck
         if ~exist(outputPath,"dir")
             mkdir(outputPath);
         end
@@ -100,7 +115,7 @@ function precomputeDatabase(imds, outputPath, dlModel, preprocessFunc, batchSize
 
             % progress bar
 
-            waitbar(i/length(uniqueClassfolders),f,sprintf("[ 1 / 2 ] Generating Directories [ %d / %d ]\n \n ",i,length(uniqueClassfolders)));
+            waitbar(i/length(uniqueClassfolders),f,sprintf("[ 1 / 2 ] Generating Directories [ %d / %d ]\n \n \n ",i,length(uniqueClassfolders)));
             if getappdata(f,'canceling')
                 delete(f);
                 error("Execution Cancelled");
@@ -116,35 +131,40 @@ function precomputeDatabase(imds, outputPath, dlModel, preprocessFunc, batchSize
         end        
     end
     
+    %% check if embedding exist
+    existenceList = false(imageNum,1);
+    if ~saveOverwrite
+        for i = 1:imageNum
+            existenceList(i) = exist(outputPaths{i},'file');
+        end
+    end
+    noEmbedGlobalIndex = find(existenceList == false);
+    noEmbedImageNum = length(noEmbedGlobalIndex);
+    embedImageNum = imageNum - noEmbedImageNum;
+    
     %% generate embeddings and save it
     
-    if ~isempty(varargin)
-        preprocessFunc = @(x) preprocessFunc(x, varargin{:});
+    if ~isempty(remainingArg)
+        preprocessFunc = @(x) preprocessFunc(x, remainingArg{:});
     end
     
     % prepare essential batch information and init payload size
-    imageNum = length(imds.Files);
-    batchNum = ceil(imageNum / batchSize);
-    startBatchIndex = floor(skipNum / batchSize);
-    if skipNum == 0
-        startBatchIndex = 1;
-    end
-    lastBatchSize = mod(imageNum, batchSize);  
+    batchNum = ceil(noEmbedImageNum / batchSize);
+    lastBatchSize = mod(noEmbedImageNum, batchSize);  
     currentBatchSize = batchSize;
     imageBatch = zeros([dlModel.Layers(1,1).InputSize batchSize], "single");
-    embedingsExist = zeros([1 batchSize], "logical");
     
     % global progress bar variables
-    loadedImages = startBatchIndex;
-    encodedImages = startBatchIndex;
-    savedImages = startBatchIndex;
+    loadedImages = 0;
+    encodedImages = 0;
+    savedImages = 0;
     
-    for batchIndex = startBatchIndex : batchNum
+%     for batchIndex = startBatchIndex : batchNum
+    for batchIndex = 1 : batchNum
 
         % if last batch
         if batchIndex == batchNum
             imageBatch = zeros([dlModel.Layers(1,1).InputSize lastBatchSize], "single");
-            embedingsExist = zeros([1 lastBatchSize], "single");
             currentBatchSize = lastBatchSize;
         end
         
@@ -155,16 +175,13 @@ function precomputeDatabase(imds, outputPath, dlModel, preprocessFunc, batchSize
             
             % progress bar
             loadedImages = loadedImages + 1;
-            updateBar(savedImages/imageNum, f, 1, loadedImages, encodedImages, savedImages, imageNum)
-            
-%             % check embeding exist
-%             embedingsExist(binIndex) = exist(fullfile(outputPath, classfolders(globalIndex), outFilenames(globalIndex)), 'file');
-%             if embedingsExist(binIndex)
-%                 continue
-%             end
-            
+            updateBar(savedImages/noEmbedImageNum, f, 1, embedImageNum, loadedImages, encodedImages, savedImages, noEmbedImageNum)
+                        
             % load image
-            globalIndex = (batchIndex - 1 ) * batchSize + binIndex;
+            % this calculates current position in noEmbedGlobalIndex then
+            % index it to retrieve the actual global index pointing to the
+            % file within imds
+            globalIndex = noEmbedGlobalIndex((batchIndex - 1 ) * batchSize + binIndex);
             image = readimage(imds, globalIndex);
             imageBatch(:,:,:,binIndex) = single(imresize(image, dlModel.Layers(1,1).InputSize(1:2)));
         end
@@ -173,7 +190,7 @@ function precomputeDatabase(imds, outputPath, dlModel, preprocessFunc, batchSize
         imageBatch = preprocessFunc(imageBatch);
         
         % progress bar
-        updateBar(savedImages/imageNum, f, 2, loadedImages, encodedImages, savedImages, imageNum)
+        updateBar(savedImages/noEmbedImageNum, f, 2, embedImageNum, loadedImages, encodedImages, savedImages, noEmbedImageNum)
         
         % predict batch of images
         imageBatch = dlarray(imageBatch,"SSCB");
@@ -181,19 +198,19 @@ function precomputeDatabase(imds, outputPath, dlModel, preprocessFunc, batchSize
         
         % progress bar
         encodedImages = loadedImages;
-        updateBar(savedImages/imageNum, f, 2, loadedImages, encodedImages, savedImages, imageNum);
+        updateBar(savedImages/noEmbedImageNum, f, 2, embedImageNum, loadedImages, encodedImages, savedImages, noEmbedImageNum);
         
         % save embeddings of images to individual matrix files
         for binIndex = 1 : currentBatchSize
             
             % progress bar
             savedImages = savedImages + 1;
-            updateBar(savedImages/imageNum, f, 3, loadedImages, encodedImages, savedImages, imageNum)
+            updateBar(savedImages/noEmbedImageNum, f, 3, embedImageNum, loadedImages, encodedImages, savedImages, noEmbedImageNum)
             
             % code
-            globalIndex = (batchIndex - 1 ) * batchSize + binIndex;
+            globalIndex = noEmbedGlobalIndex((batchIndex - 1 ) * batchSize + binIndex);
             targetEmbedding = embeddingBatch(:,:,:,binIndex);
-            save(fullfile(outputPath, classfolders(globalIndex), outFilenames(globalIndex)), "targetEmbedding");
+            save(outputPaths{globalIndex}, "targetEmbedding");
         end
         
     end
@@ -202,7 +219,7 @@ function precomputeDatabase(imds, outputPath, dlModel, preprocessFunc, batchSize
     
 end
 
-function updateBar(progress, f, state, loadedImages, encodedImages, savedImages, imageNum)
+function updateBar(progress, f, state, embedImageNum, loadedImages, encodedImages, savedImages, imageNum)
     
     if state == 1
         s = ["*"," "," "];
@@ -213,9 +230,11 @@ function updateBar(progress, f, state, loadedImages, encodedImages, savedImages,
     end
     
     waitbar(progress,f, ...
-        sprintf("[ 2 / 2 ] Load Images     [ %s / %d ] %s\n" + ...
+        sprintf("          Ignored %d Embedded Images    \n" + ...
+                "[ 2 / 2 ] Load Images     [ %s / %d ] %s\n" + ...
                 "[ 2 / 2 ] Encode Batch    [ %s / %d ] %s\n" + ...
                 "[ 2 / 2 ] Save Enbeddings [ %s / %d ] %s", ...
+                embedImageNum, ...
                 pad(string(loadedImages),7,'left'),imageNum,s(1), ...
                 pad(string(encodedImages),7,'left'),imageNum,s(2), ...
                 pad(string(savedImages),7,'left'),imageNum,s(3)));
