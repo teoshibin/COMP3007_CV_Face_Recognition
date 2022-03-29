@@ -15,7 +15,7 @@ function outputID = VGGFace_Identify(trainPath, testPath, config)
     end
     
     % progress bar
-    f = waitbar(0,"Face recognition setting up...","Name","Face Recognition",...
+    f = waitbar(0,"Setting up...","Name","Face Recognition",...
         'CreateCancelBtn','setappdata(gcbf,''canceling'',1)');
     setappdata(f,'canceling',0); 
 
@@ -41,7 +41,7 @@ function outputID = VGGFace_Identify(trainPath, testPath, config)
 
     % access precomputed embeddings
     fdsTrain = fileDatastore( ...
-        "FaceDatabase\Train-encoded", ...
+        config.embeddedDatabasePath, ...
         'ReadFcn',@(x) cell2mat(struct2cell(load(x))), ...
         "IncludeSubfolders",true, ...
         "FileExtensions",'.mat' ...
@@ -92,7 +92,7 @@ function outputID = VGGFace_Identify(trainPath, testPath, config)
         imageBatch = imageBatchResize(imageBatch, targetSize(1:2));
         imageBatch = single(imageBatch);
         imageBatch = VGGFace_Normalize(imageBatch);
-        imageBatch = dlarray(imageBatch,"SSCB");        
+        imageBatch = dlarray(imageBatch,"SSCB"); 
         if (config.executionEnvironment == "auto" && canUseGPU) || config.executionEnvironment == "gpu"
             imageBatch = gpuArray(imageBatch);
         end
