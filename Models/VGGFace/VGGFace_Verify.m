@@ -1,4 +1,4 @@
-function result = verifyBatch(model, batch1, batch2, isEmbedded, similarity_metric)
+function result = VGGFace_Verify(model, batch1, batch2, isEmbedded, similarity_metric)
 
     arguments
         model dlnetwork
@@ -17,12 +17,12 @@ function result = verifyBatch(model, batch1, batch2, isEmbedded, similarity_metr
     end
     
     if ~isEmbedded(1)
-        embedding1 = embedBatch(model, batch1);
+        embedding1 = predict(model, batch1);
     else
         embedding1 = batch1;
     end
     if ~isEmbedded(2)
-        embedding2 = embedBatch(model, batch2);
+        embedding2 = predict(model, batch2);
     else
         embedding2 = batch2;
     end  

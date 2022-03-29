@@ -1,4 +1,4 @@
-function model = loadModel(weights_path)
+function model = VGGFace_LoadModel(weights_path)
 % This will load the model in as a dlnetwork
 
 % NOTE:

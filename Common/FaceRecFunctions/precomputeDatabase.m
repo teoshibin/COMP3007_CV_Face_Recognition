@@ -57,7 +57,6 @@ function precomputeDatabase(imds, outputPath, dlModel, preprocessFunc, batchSize
 
     %% prepare arguments
     
-%     skipNum = 0;
     skipDirCheck = false;
     saveOverwrite = false;
     remainingArg = {};
@@ -162,13 +161,12 @@ function precomputeDatabase(imds, outputPath, dlModel, preprocessFunc, batchSize
 %     for batchIndex = startBatchIndex : batchNum
     for batchIndex = 1 : batchNum
 
-        % if last batch
-        if batchIndex == batchNum
+        % if last batch and last batch size is not zero then make sure the
+        % last batch is fed using the last batch size
+        if batchIndex == batchNum && lastBatchSize ~= 0
             imageBatch = zeros([dlModel.Layers(1,1).InputSize lastBatchSize], "single");
             currentBatchSize = lastBatchSize;
         end
-        
-        
         
         % read batch of images while making sure the image size is correct
         for binIndex = 1 : currentBatchSize

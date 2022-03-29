@@ -3,34 +3,47 @@ close all;
 
 %% load essentials
 
-% addpath(genpath("Models"));                     % load all models
 addpath(fullfile("Models","TemplateMatching")); % load TemplateMatching
 addpath(fullfile("Models","VGGFace"));          % load VGGFace
-addpath("Common");                              % load common functions
+addpath(genpath("Common"));                     % load common functions
 
-faceDatasetPath = "FaceDatabase";
-trainPath = char(fullfile(faceDatasetPath,"Train",filesep));
-testPath = char(fullfile(faceDatasetPath, "Test",filesep));
+trainPath = fullfile("FaceDatabase","Train",filesep);
+testPath = fullfile("FaceDatabase", "Test",filesep);
+embeddedDatabasePath = fullfile("FaceDatabase","Train-embedded");
 
 %% Retrive training and testing images
 
-[trainImgSet, trainPersonID]=loadTrainingSet(trainPath); % load training images
+[trainImgSet, trainPersonID] = loadTrainingSet([char(trainPath) filesep]); % load training images
 
 %% BASELINE Template Matching
 
 load testLabel;
 tic;
-outputID = templateMatching(trainImgSet, trainPersonID, testPath);
+outputID = templateMatching(trainImgSet, trainPersonID, [char(testPath) filesep]);
 runTime = toc
 recAccuracy = matchID(outputID, testLabel)
 
 %% METHOD2 VGGFace with cosine similarity
 
-paramsPath = fullfile("Weights","VGGFace","params.mat");
+batchSize = 64;
+environment = "cpu";
 
 load testLabel;
+% using more memory but improve runtime speed
+VGGFace_ExternalPrecompute(trainPath, embeddedDatabasePath, batchSize);
 tic;
-outputID = VGGFaceIdentify(trainImgSet, trainPersonID, testPath, paramsPath, "cosine");
+
+% all these name value pairs are optional, it is writen out as a demo
+outputID = VGGFace_Identify( ...
+                trainPath, ...
+                testPath, ...
+                "embeddedDatabase",true, ...
+                "embeddedDatabasePath",embeddedDatabasePath, ...
+                "batchSize",batchSize, ...
+                "similarity_metric","cosine", ...
+                "executionEnvironment",environment ...
+           );
+
 methodNewTime = toc
 recAccuracyNew = matchID(outputID, testLabel)
 
