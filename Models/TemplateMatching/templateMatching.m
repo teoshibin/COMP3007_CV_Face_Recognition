@@ -14,7 +14,7 @@ total_train_subject = size(trainImgSet,4);
 trainTmpSet=zeros(600*600,total_train_subject); % use the raw 600x600 intensity values as feature vector 
 for i=1:total_train_subject
     
-    waitbar(i / total_train_subject, f, sprintf('(1/2) Preparing template ( %d / %d )', i, total_train_subject));
+    waitbar(i / total_train_subject, f, sprintf('[ 1 / 2 ] Preparing template [ %d / %d ]', i, total_train_subject));
     
     tmpI= rgb2gray(trainImgSet(:,:,:,i));
     tmpI=double(tmpI(:))/255'; % normalise the intensity to 0-1& store the feature vector
@@ -30,7 +30,7 @@ testImgNames=dir([testPath,'*.jpg']);
 total_test_subject = size(testImgNames,1);
 for i=1:total_test_subject
     
-    waitbar(i / total_test_subject, f, sprintf('(2/2) Matching template ( %d / %d )', i, total_test_subject));
+    waitbar(i / total_test_subject, f, sprintf('[ 2 / 2 ] Matching template [ %d / %d ]', i, total_test_subject));
     
     testImg=imread([testPath, testImgNames(i,:).name]);%load one of the test images
     % perform the same pre-processing as the training images

@@ -1,3 +1,5 @@
+% This script identify 1344 test subject using 2 method 
+
 clear all;
 close all;
 
@@ -25,11 +27,11 @@ recAccuracy = matchID(outputID, testLabel)
 
 %% METHOD2 VGGFace with cosine similarity
 
-batchSize = 64;
-environment = "cpu";
+batchSize = 64;         % decrease this if your pc is getting memory error
+environment = "cpu";    % this model is too large for my tiny VRAM
 
 load testLabel;
-% using more memory but improve runtime speed
+% use memory to improve runtime speed
 VGGFace_ExternalPrecompute(trainPath, embeddedDatabasePath, batchSize);
 tic;
 
@@ -40,7 +42,7 @@ outputID = VGGFace_Identify( ...
                 "embeddedDatabase",true, ...
                 "embeddedDatabasePath",embeddedDatabasePath, ...
                 "batchSize",batchSize, ...
-                "similarity_metric","cosine", ...
+                "similarity_metric","euclidean_l2", ...
                 "executionEnvironment",environment ...
            );
 
@@ -49,7 +51,7 @@ recAccuracyNew = matchID(outputID, testLabel)
 
 %% Compare baseline and method2
 
-Name = ["Template Matching"; "VGGFace Cosine"];
+Name = ["Template Matching"; "VGGFace euclidean l2"];
 Time = [runTime; methodNewTime];
 Accuracy = [recAccuracy; recAccuracyNew];
 tb = table(Name, Time, Accuracy)

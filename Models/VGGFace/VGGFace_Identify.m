@@ -123,7 +123,8 @@ function outputID = VGGFace_Identify(trainPath, testPath, config)
         
     end
     
-    close(f);
+%     close(f);
+    delete(f);
 
 end
 

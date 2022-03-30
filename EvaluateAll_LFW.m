@@ -14,6 +14,7 @@ addpath(genpath("Common"));                     % load common functions
 trainPath = fullfile("FaceDatabase","Train",filesep);
 % path to folder containing no subfolder but a bunch of testing images
 testPath = fullfile("FaceDatabase", "Test",filesep);
+% path to folder containing embedded images from trainPath
 embeddedDatabasePath = fullfile("FaceDatabase","Train-embedded");
 
 %% Retrive training and testing images
