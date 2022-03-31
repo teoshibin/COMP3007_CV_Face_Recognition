@@ -1,14 +1,22 @@
-function [batchA, batchB, label] = LFWPairBatchLoader(imds, sequenceA, sequenceB, labels, iter)
+function [batchA, batchB, label] = LFWPairBatchLoader(imds, sequenceA, sequenceB, labels, iter, config)
 
-    imageSize = size(readimage(imds,1));
+    arguments
+        imds
+        sequenceA
+        sequenceB
+        labels
+        iter
+        config.imageSize double = size(readimage(imds,1))
+    end
+
     batchSize = length(sequenceA{iter});
     
-    batchA = zeros([imageSize batchSize], "single");
-    batchB = zeros([imageSize batchSize], "single");
+    batchA = zeros([config.imageSize batchSize], "single");
+    batchB = zeros([config.imageSize batchSize], "single");
     
     for i = 1:batchSize
-        batchA(:,:,:,i) = readimage(imds, sequenceA{iter}(i));
-        batchB(:,:,:,i) = readimage(imds, sequenceB{iter}(i));
+        batchA(:,:,:,i) = imresize(readimage(imds, sequenceA{iter}(i)), config.imageSize(1:2));
+        batchB(:,:,:,i) = imresize(readimage(imds, sequenceB{iter}(i)), config.imageSize(1:2));
     end
     label = labels{iter};
     

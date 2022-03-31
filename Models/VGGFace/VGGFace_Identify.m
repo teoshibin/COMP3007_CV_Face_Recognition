@@ -113,6 +113,7 @@ function outputID = VGGFace_Identify(trainPath, testPath, config)
             % progres bar
             waitbar(globalIndex/testImageNum,f,sprintf("Identifying Faces [ %d / %d ]",globalIndex,testImageNum));
             if getappdata(f,'canceling')
+                close(f);
                 delete(f);
                 error("Execution Cancelled");
             end
@@ -123,7 +124,6 @@ function outputID = VGGFace_Identify(trainPath, testPath, config)
         
     end
     
-%     close(f);
     delete(f);
 
 end

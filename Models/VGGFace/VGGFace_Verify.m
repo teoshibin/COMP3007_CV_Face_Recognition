@@ -5,7 +5,7 @@ function result = VGGFace_Verify(model, batch1, batch2, isEmbedded, similarity_m
         batch1 dlarray
         batch2 dlarray
         isEmbedded (1,2) logical
-        similarity_metric (1,:) char
+        similarity_metric (1,:) char {mustBeMember(similarity_metric,["euclidean","euclidean_l2","cosine"])}
     end
 
     if strcmp(similarity_metric, 'euclidean')

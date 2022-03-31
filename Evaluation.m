@@ -31,8 +31,10 @@ batchSize = 64;         % decrease this if your pc is getting memory error
 environment = "cpu";    % this model is too large for my tiny VRAM
 
 load testLabel;
+
 % use memory to improve runtime speed
 VGGFace_ExternalPrecompute(trainPath, embeddedDatabasePath, batchSize);
+
 tic;
 
 % all these name value pairs are optional, it is writen out as a demo
@@ -45,7 +47,7 @@ outputID = VGGFace_Identify( ...
                 "similarity_metric","euclidean_l2", ...
                 "executionEnvironment",environment ...
            );
-
+       
 methodNewTime = toc
 recAccuracyNew = matchID(outputID, testLabel)
 

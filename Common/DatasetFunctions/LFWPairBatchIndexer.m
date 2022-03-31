@@ -1,26 +1,42 @@
-function [sequenceA, sequenceB, labels, batchNum] = LFWPairBatchIndexer(imds, similarTable, dissimilarTable, batchSize)
+function [sequenceA, sequenceB, labels, batchNum] = LFWPairBatchIndexer(ds, pairsTable, config)
+
+    arguments
+        ds 
+        pairsTable (:,5)
+        config.batchSize (1,1) double = 32
+        config.shuffle (1,1) logical = true
+    end
 
     % rectify and calculate batch size
-    
-    if mod(batchSize, 2) == 1
-        batchSize = batchSize + 1;
+    if config.batchSize ~= inf
+        if mod(config.batchSize, 2) == 1
+            config.batchSize = config.batchSize + 1;
+        end
+    else
+        config.batchSize = length(ds.Files);
     end
     
-    simLen = size(similarTable, 1);
-    disLen = size(dissimilarTable, 1);
     
-    similarTable.isSimilar = ones(size(similarTable,1),"double");
-    dissimilarTable.isSimilar = zeros(size(dissimilarTable,1),"double");
+%     simLen = size(similarTable, 1);
+%     disLen = size(dissimilarTable, 1);
     
-    wholeTable = [similarTable ; dissimilarTable];
-    wholeTable = wholeTable(randperm(size(wholeTable,1)), :); % shuffle rows by indexing randomly
+%     similarTable.isSimilar = ones(size(similarTable,1),"double");
+%     dissimilarTable.isSimilar = zeros(size(dissimilarTable,1),"double");
     
-    totalPairs = simLen + disLen;
-    batchNum =  ceil(totalPairs / batchSize);
-    lastBatchSize = mod(totalPairs, batchSize);
+%     wholeTable = [similarTable ; dissimilarTable];
+    
+    if config.shuffle
+        wholeTable = pairsTable(randperm(size(pairsTable,1)), :); % shuffle rows by indexing randomly
+    else
+        wholeTable = pairsTable;
+    end
+        
+    totalPairs = size(wholeTable, 1);
+    batchNum =  ceil(totalPairs / config.batchSize);
+    lastBatchSize = mod(totalPairs, config.batchSize);
     
     % get the name of the files
-    filenames = split(imds.Files, filesep); % whole path
+    filenames = split(ds.Files, filesep); % whole path
     filenames = split(filenames(:, end), ".");  % 'NAME_0001.jpg'
     filenames = filenames(:,1);                 % 'NAME_0001'
     
@@ -40,7 +56,7 @@ function [sequenceA, sequenceB, labels, batchNum] = LFWPairBatchIndexer(imds, si
         if i == batchNum && lastBatchSize ~= 0
             binSize = lastBatchSize;
         else
-            binSize = batchSize;
+            binSize = config.batchSize;
         end
         
         % generate list of index to imds per batch
@@ -48,9 +64,9 @@ function [sequenceA, sequenceB, labels, batchNum] = LFWPairBatchIndexer(imds, si
         idBList = zeros([1, binSize]);
         lbList = zeros([1, binSize]);
         for k = 1:binSize
-            idAList(k) = wholeTable.indexA((i-1)*batchSize + k);
-            idBList(k) = wholeTable.indexB((i-1)*batchSize + k);
-            lbList(k) = wholeTable.isSimilar((i-1)*batchSize + k);
+            idAList(k) = wholeTable.indexA((i-1)*config.batchSize + k);
+            idBList(k) = wholeTable.indexB((i-1)*config.batchSize + k);
+            lbList(k) = wholeTable.isSimilar((i-1)*config.batchSize + k);
         end
         
         sequenceA = [sequenceA idAList];
