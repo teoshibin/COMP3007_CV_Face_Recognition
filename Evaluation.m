@@ -1,5 +1,6 @@
 % PLEASE REFER TO "Reproducibility" section of README FOR PARAMETERS 
 % DOWNLOAD LINK AND EXECUTION INSTRUCTIONS
+% alternative: https://github.com/teoshibin/COMP3007_CV_Face_Recognition
 % This script identify 1344 test subject using 2 methods
 
 clear all;

@@ -6,7 +6,7 @@ University coursework, a re-implementation of face recognition models in Matlab
     <img src="Screenshot/vgg16_xml.png" width="49%"/>
 </p>
 <p align="center" float="left">
-    <img src="Screenshot/roc.png" width="75%"/>
+    <img src="Screenshot/roc.png" width="50%"/>
 </p>
 
 # Reproducibility
@@ -14,7 +14,7 @@ University coursework, a re-implementation of face recognition models in Matlab
     - deep learning toolbox
     - parallel computing toolbox
 2. Model Params
-    - VGGFace Params
+    - [MATLAB VGGFace Params](https://github.com/teoshibin/COMP3007_CV_Face_Recognition/releases/latest)
 
 # Dataset
 - LFW funneled
