@@ -1,20 +1,17 @@
+% This script identify 1344 test subject using 2 method 
+
 clear all;
 close all;
 
 %% load essentials
 
-addpath(fullfile("Models","TemplateMatching")); % load TemplateMatching
-addpath(fullfile("Models","VGGFace"));          % load VGGFace
+addpath(fullfile("Models/TemplateMatching")); % load TemplateMatching
+addpath(fullfile("Models/VGGFace"));          % load VGGFace
 addpath(genpath("Common"));                     % load common functions
 
-% NOTE CHAR AND STRING CONCATINATION ARE DIFFERENT AND IM USING STRING HERE
-% PREVIOUS IMPLEMENTATION WAS USING CHAR ARRAY
-
-% path to folder containing subfolder of each individual
-trainPath = fullfile("FaceDatabase","Train",filesep);
-% path to folder containing no subfolder but a bunch of testing images
-testPath = fullfile("FaceDatabase", "Test",filesep);
-embeddedDatabasePath = fullfile("FaceDatabase","Train-embedded");
+trainPath = fullfile("FaceDatabase/Train/");
+testPath = fullfile("FaceDatabase/Test/");
+embeddedDatabasePath = fullfile("FaceDatabase/Train-embedded");
 
 %% Retrive training and testing images
 
@@ -28,43 +25,19 @@ outputID = templateMatching(trainImgSet, trainPersonID, [char(testPath) filesep]
 runTime = toc
 recAccuracy = matchID(outputID, testLabel)
 
-%% METHOD2 VGGFace with cosine similarity
+%% METHOD2 VGGFace DCNN
 
-batchSize = 64;
-environment = "cpu";
+batchSize = 64;         % decrease this if your pc is getting memory error
+environment = "cpu";    % this model is too large for my tiny VRAM
 
 load testLabel;
-% use less runtime memory and improve runtime speed
+
+% use memory to improve runtime speed
 VGGFace_ExternalPrecompute(trainPath, embeddedDatabasePath, batchSize);
+
 tic;
 
 % all these name value pairs are optional, it is writen out as a demo
-% additional config are all visible in function doc
-outputID = VGGFace_Identify( ...
-                trainPath, ...
-                testPath, ...
-                "embeddedDatabase",true, ...
-                "embeddedDatabasePath",embeddedDatabasePath, ...
-                "batchSize",batchSize, ...
-                "similarity_metric","cosine", ...
-                "executionEnvironment",environment ...
-           );
-
-methodNewTime = toc
-recAccuracyNew = matchID(outputID, testLabel)
-
-%% METHOD2 VGGFace with euclidean similarity
-
-batchSize = 64;
-environment = "cpu";
-
-load testLabel;
-% use less runtime memory and improve runtime speed
-VGGFace_ExternalPrecompute(trainPath, embeddedDatabasePath, batchSize);
-tic;
-
-% all these name value pairs are optional, it is writen out as a demo
-% additional config are all visible in function doc
 outputID = VGGFace_Identify( ...
                 trainPath, ...
                 testPath, ...
@@ -74,22 +47,13 @@ outputID = VGGFace_Identify( ...
                 "similarity_metric","euclidean", ...
                 "executionEnvironment",environment ...
            );
+       
+methodNewTime = toc
+recAccuracyNew = matchID(outputID, testLabel)
 
-t2 = toc
-a2 = matchID(outputID, testLabel)
-
-%% METHOD2 VGGFace with euclidean l2 similarity
-
-batchSize = 64;
-environment = "cpu";
-
-load testLabel;
-% use less runtime memory and improve runtime speed
-VGGFace_ExternalPrecompute(trainPath, embeddedDatabasePath, batchSize);
 tic;
 
 % all these name value pairs are optional, it is writen out as a demo
-% additional config are all visible in function doc
 outputID = VGGFace_Identify( ...
                 trainPath, ...
                 testPath, ...
@@ -99,13 +63,29 @@ outputID = VGGFace_Identify( ...
                 "similarity_metric","euclidean_l2", ...
                 "executionEnvironment",environment ...
            );
+       
+methodNewTime2 = toc
+recAccuracyNew2 = matchID(outputID, testLabel)
 
-t3 = toc
-a3 = matchID(outputID, testLabel)
+tic;
+
+% all these name value pairs are optional, it is writen out as a demo
+outputID = VGGFace_Identify( ...
+                trainPath, ...
+                testPath, ...
+                "embeddedDatabase",true, ...
+                "embeddedDatabasePath",embeddedDatabasePath, ...
+                "batchSize",batchSize, ...
+                "similarity_metric","cosine", ...
+                "executionEnvironment",environment ...
+           );
+       
+methodNewTime3 = toc
+recAccuracyNew3 = matchID(outputID, testLabel)
 
 %% Compare baseline and method2
 
-Name = ["Template Matching"; "VGGFace Cosine"; "VGGFace Euclidean"; "VGGFace Euclidean L2"];
-Time = [runTime; methodNewTime; t2; t3];
-Accuracy = [recAccuracy; recAccuracyNew; a2; a3];
+Name = ["Template Matching"; "VGGFace euclidean"; "VGGFace euclidean l2"; "VGGFace cosine"];
+Time = [runTime; methodNewTime; methodNewTime2; methodNewTime3];
+Accuracy = [recAccuracy; recAccuracyNew; recAccuracyNew2; recAccuracyNew3];
 tb = table(Name, Time, Accuracy)

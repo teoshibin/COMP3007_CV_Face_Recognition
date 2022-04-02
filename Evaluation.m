@@ -5,27 +5,27 @@ close all;
 
 %% load essentials
 
-addpath(fullfile("Models","TemplateMatching")); % load TemplateMatching
-addpath(fullfile("Models","VGGFace"));          % load VGGFace
+addpath(fullfile("Models/TemplateMatching")); % load TemplateMatching
+addpath(fullfile("Models/VGGFace"));          % load VGGFace
 addpath(genpath("Common"));                     % load common functions
 
-trainPath = fullfile("FaceDatabase","Train",filesep);
-testPath = fullfile("FaceDatabase", "Test",filesep);
-embeddedDatabasePath = fullfile("FaceDatabase","Train-embedded");
+trainPath = fullfile("FaceDatabase/Train/");
+testPath = fullfile("FaceDatabase/Test/");
+embeddedDatabasePath = fullfile("FaceDatabase/Train-embedded");
 
 %% Retrive training and testing images
 
-[trainImgSet, trainPersonID] = loadTrainingSet([char(trainPath) filesep]); % load training images
+[trainImgSet, trainPersonID] = loadTrainingSet(char(trainPath)); % load training images
 
 %% BASELINE Template Matching
 
 load testLabel;
 tic;
-outputID = templateMatching(trainImgSet, trainPersonID, [char(testPath) filesep]);
+outputID = templateMatching(trainImgSet, trainPersonID, char(testPath));
 runTime = toc
 recAccuracy = matchID(outputID, testLabel)
 
-%% METHOD2 VGGFace with cosine similarity
+%% METHOD2 VGGFace DCNN
 
 batchSize = 64;         % decrease this if your pc is getting memory error
 environment = "cpu";    % this model is too large for my tiny VRAM
