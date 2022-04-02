@@ -1,13 +1,12 @@
-function outputID = VGGFace_Identify(trainPath, testPath, config)
+function outputID = VGGFace_Identify(trainPath, embeddedTrainPath, testPath, config)
 % identify test face against train database, identification is done by
 % running face verification multiple times.       
 
     arguments
         trainPath (1,:) char
+        embeddedTrainPath (1,:) char
         testPath (1,:) char
-        config.embeddedDatabase (1,1) logical = false
-        config.embeddedDatabasePostfix (1,:) char = "-embedded"
-        config.embeddedDatabasePath (1,:) char = defaultEmbeddedDatabasePath()
+        config.precomputeCheck (1,1) logical = true
         config.batchSize (1,1) double {mustBePositive(config.batchSize),mustBeInteger(config.batchSize)} = 32
         config.similarity_metric (1,:) char = 'euclidean'
         config.executionEnvironment (1,:) char {mustBeMember(config.executionEnvironment,["auto","cpu","gpu"])} = "auto"
@@ -28,20 +27,29 @@ function outputID = VGGFace_Identify(trainPath, testPath, config)
     %% LOAD DATABASE EMBEDDINGS
 
     % if train path is not embedded dataset then compute embeddings
-    if ~config.embeddedDatabase
+    if config.precomputeCheck
         
         imdsTrain = imageDatastore(trainPath, ...
             "IncludeSubfolders",true, ...
             "LabelSource","foldernames");
         
-        %% TODO - add env config for this function
-        precomputeDatabase(imdsTrain, config.embeddedDatabasePath, model, @VGGFace_Normalize, config.batchSize);
+        precomputeDatabase(imdsTrain, ...
+            embeddedTrainPath, ...
+            model, ...
+            @VGGFace_Normalize, ...
+            config.batchSize, ...
+            "executionEnvironment", config.executionEnvironment...
+            );
         
     end
-
+    
+    if ~exist(embeddedTrainPath, "dir")
+        error("Invalid Embedded Train Path");
+    end
+    
     % access precomputed embeddings
     fdsTrain = fileDatastore( ...
-        config.embeddedDatabasePath, ...
+        embeddedTrainPath, ...
         'ReadFcn',@(x) cell2mat(struct2cell(load(x))), ...
         "IncludeSubfolders",true, ...
         "FileExtensions",'.mat' ...
@@ -126,14 +134,4 @@ function outputID = VGGFace_Identify(trainPath, testPath, config)
     
     delete(f);
 
-end
-
-function out = defaultEmbeddedDatabasePath()
-    if config.embeddedDatabase
-        out = trainPath;
-    else
-        temp = split(trainPath,filesep,2);
-        temp(end) = strcat(temp(end),config.embeddedDatabasePostfix);
-        out = join(temp,filesep);
-    end
 end

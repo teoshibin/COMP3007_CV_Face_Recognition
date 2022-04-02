@@ -1,4 +1,4 @@
-function precomputeDatabase(imds, outputPath, dlModel, preprocessFunc, batchSize, varargin)
+function precomputeDatabase(imds, outputPath, dlModel, preprocessFunc, batchSize, config)
 % compute embeddings for entire image dataset and save them to a new location
 % this function assumes only 1 level of subfolder exist within the database
 %
@@ -50,26 +50,26 @@ function precomputeDatabase(imds, outputPath, dlModel, preprocessFunc, batchSize
         dlModel dlnetwork
         preprocessFunc
         batchSize double {mustBePositive(batchSize)}
-    end
-    arguments(Repeating)
-        varargin
+        config.skipDirCheck (1,1) logical = false;
+        config.saveOverwrite (1,1) logical = false;
+        config.executionEnvironment (1,:) char {mustBeMember(config.executionEnvironment,["auto","cpu","gpu"])} = "auto"
     end
 
     %% prepare arguments
     
-    skipDirCheck = false;
-    saveOverwrite = false;
-    remainingArg = {};
-    for i = 1:2:length(varargin)
-        if strcmp(varargin{i},"skipDirCheck")
-            skipDirCheck = varargin{i+1};
-        elseif strcmp(varargin{i},"saveOverwrite")
-            saveOverwrite = varargin{i+1};
-        else
-            remainingArg = varargin(i:end);
-            break
-        end
-    end
+%     skipDirCheck = false;
+%     saveOverwrite = false;
+%     remainingArg = {};
+%     for i = 1:2:length(varargin)
+%         if strcmp(varargin{i},"skipDirCheck")
+%             skipDirCheck = varargin{i+1};
+%         elseif strcmp(varargin{i},"saveOverwrite")
+%             saveOverwrite = varargin{i+1};
+%         else
+%             remainingArg = varargin(i:end);
+%             break
+%         end
+%     end
         
     %% global variables
     
@@ -106,7 +106,7 @@ function precomputeDatabase(imds, outputPath, dlModel, preprocessFunc, batchSize
     
     %% generate directories and subdirectories
     
-    if ~skipDirCheck
+    if ~config.skipDirCheck
         if ~exist(outputPath,"dir")
             mkdir(outputPath);
         end
@@ -123,7 +123,7 @@ function precomputeDatabase(imds, outputPath, dlModel, preprocessFunc, batchSize
 
             % main code
 
-            classPath = fullfile(outputPath, uniqueClassfolders(i));
+            classPath = fullfile(outputPath, uniqueClassfolders{i});
             if ~exist(classPath,"dir")
                 mkdir(classPath);
             end
@@ -132,7 +132,7 @@ function precomputeDatabase(imds, outputPath, dlModel, preprocessFunc, batchSize
     
     %% check if embedding exist
     existenceList = false(imageNum,1);
-    if ~saveOverwrite
+    if ~config.saveOverwrite
         for i = 1:imageNum
             existenceList(i) = exist(outputPaths{i},'file');
         end
@@ -142,10 +142,6 @@ function precomputeDatabase(imds, outputPath, dlModel, preprocessFunc, batchSize
     embedImageNum = imageNum - noEmbedImageNum;
     
     %% generate embeddings and save it
-    
-    if ~isempty(remainingArg)
-        preprocessFunc = @(x) preprocessFunc(x, remainingArg{:});
-    end
     
     % prepare essential batch information and init payload size
     batchNum = ceil(noEmbedImageNum / batchSize);
@@ -192,6 +188,9 @@ function precomputeDatabase(imds, outputPath, dlModel, preprocessFunc, batchSize
         
         % predict batch of images
         imageBatch = dlarray(imageBatch,"SSCB");
+        if (config.executionEnvironment == "auto" && canUseGPU) || config.executionEnvironment == "gpu"
+            imageBatch = gpuArray(imageBatch);
+        end
         embeddingBatch = predict(dlModel, imageBatch);
         
         % progress bar
@@ -207,7 +206,7 @@ function precomputeDatabase(imds, outputPath, dlModel, preprocessFunc, batchSize
             
             % code
             globalIndex = noEmbedGlobalIndex((batchIndex - 1 ) * batchSize + binIndex);
-            targetEmbedding = embeddingBatch(:,:,:,binIndex);
+            targetEmbedding = gather(extractdata(embeddingBatch(:,:,:,binIndex)));
             save(outputPaths{globalIndex}, "targetEmbedding");
         end
         
