@@ -6,7 +6,10 @@ University coursework, a re-implementation of face recognition models in Matlab
     <img src="Screenshot/vgg16_xml.png" width="49%"/>
 </p>
 <p align="center" float="left">
-    <img src="Screenshot/roc.png" width="50%"/>
+    <img src="Screenshot/roc.png" width="50%"/>    
+</p>
+<p align="center" float="left">
+    <img src="Screenshot/accuracy.jpg" width="50%"/>    
 </p>
 
 # Reproducibility
