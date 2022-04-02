@@ -9,7 +9,7 @@ close all;
 
 addpath(fullfile("Models/TemplateMatching")); % load TemplateMatching
 addpath(fullfile("Models/VGGFace"));          % load VGGFace
-addpath(genpath("Common"));                     % load common functions
+addpath(genpath("Common"));                   % load common functions
 
 trainPath = fullfile("FaceDatabase/Train/");
 testPath = fullfile("FaceDatabase/Test/");
@@ -39,7 +39,7 @@ VGGFace_ExternalPrecompute(trainPath, embeddedTrainPath, batchSize);
 
 tic;
 
-% all these name value pairs are optional, it is writen out as a demo
+% only chnage the path if needed
 outputID = VGGFace_Identify( ...
                 trainPath, ...
                 embeddedTrainPath, ...

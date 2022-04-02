@@ -10,7 +10,7 @@ close all;
 
 addpath(fullfile("Models/TemplateMatching")); % load TemplateMatching
 addpath(fullfile("Models/VGGFace"));          % load VGGFace
-addpath(genpath("Common"));                     % load common functions
+addpath(genpath("Common"));                   % load common functions
 
 trainPath = fullfile("FaceDatabase/Train/");
 testPath = fullfile("FaceDatabase/Test/");
