@@ -20,7 +20,7 @@ University coursework, a re-implementation of face recognition models in Matlab
 
 2. Model Params
     - [MATLAB VGGFace Params](https://github.com/teoshibin/COMP3007_CV_Face_Recognition/releases/latest) - place it under `Weights\VGGFace\` for it to work
-g
+
 # Dataset
 - LFW funneled | [kaggle](https://www.kaggle.com/datasets/atulanandjha/lfwpeople) | [official](http://vis-www.cs.umass.edu/lfw/)
 - a small subset of celeb dataset (100 subjects 1344 test images)
