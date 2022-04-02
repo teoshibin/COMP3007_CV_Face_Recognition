@@ -11,14 +11,16 @@ University coursework, a re-implementation of face recognition models in Matlab
 
 # Reproducibility
 1. MATLAB Toolboxes
-    - deep learning toolbox
-    - parallel computing toolbox
+    - [deep learning toolbox](https://uk.mathworks.com/products/deep-learning.html)
+    - [parallel computing toolbox](https://uk.mathworks.com/products/parallel-computing.html)
+    - [Converter for TF Keras Model](https://uk.mathworks.com/matlabcentral/fileexchange/64649-deep-learning-toolbox-converter-for-tensorflow-models)
+
 2. Model Params
     - [MATLAB VGGFace Params](https://github.com/teoshibin/COMP3007_CV_Face_Recognition/releases/latest)
 
 # Dataset
-- LFW funneled
-- a small subset of celeb dataset
+- LFW funneled | [kaggle](https://www.kaggle.com/datasets/atulanandjha/lfwpeople) | [official](http://vis-www.cs.umass.edu/lfw/)
+- a small subset of celeb dataset (100 subjects 1344 test images)
 
 # Folder Structure
 ```
