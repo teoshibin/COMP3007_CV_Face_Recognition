@@ -1,5 +1,5 @@
 function out = imageSubtract(batch,valueR, valueG, valueB)
-% this normalize individual channels by VGGFace1 dataset mean
+% this subtract individual channels by R G and B values
  
     out = zeros(size(batch),"single");
     if length(size(batch)) == 4

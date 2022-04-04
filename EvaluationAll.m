@@ -11,9 +11,17 @@ addpath(fullfile("Models/TemplateMatching")); % load TemplateMatching
 addpath(fullfile("Models/VGGFace"));          % load VGGFace
 addpath(genpath("Common"));                   % load common functions
 
-trainPath = fullfile("FaceDatabase/Train/");
-testPath = fullfile("FaceDatabase/Test/");
-embeddedTrainPath = fullfile("FaceDatabase/Train-embedded");
+% NOTE: previous implementation was using char array here for template
+% matching and trainingsetloading I have change it to char to fit the code
+% consistency and quality
+trainPath = fullfile("FaceDatabase/Train/");    % path to subject database (change this)
+testPath = fullfile("FaceDatabase/Test/");      % path to subject testing set (change this)
+
+% a made up path that may not exist yet
+% embedded folder will be created with a postfix of '-embedded' using trainPath
+
+% embeddedTrainPath = fullfile("FaceDatabase/Train-embedded"); % hard coded path
+embeddedTrainPath = fullfile(strcat(strip(trainPath,"right",filesep), "-embedded")); % dynamicly generated path
 
 %% Retrive training and testing images
 

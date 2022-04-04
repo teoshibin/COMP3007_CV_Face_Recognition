@@ -2,8 +2,6 @@ function precomputeDatabase(imds, outputPath, dlModel, preprocessFunc, batchSize
 % compute embeddings for entire image dataset and save them to a new location
 % this function assumes only 1 level of subfolder exist within the database
 %
-%   STANDARD ARGUMENTS
-%
 %   imds            - imageDatastore object of intput images
 %                     dataset structure : rootFolder > classFolder > images
 % 
@@ -16,19 +14,22 @@ function precomputeDatabase(imds, outputPath, dlModel, preprocessFunc, batchSize
 %                     process data in batch
 %   batchSize       - feed foward batch size (larger is faster, require more memory)
 %
-%   varargin        - apart from name and value pairs the remaining arguments 
-%                     are all preprocess function input arguments
-%
-%   VARARGIN NAME AND VALUE PAIR
+%   config          - Name & value Pairs
 % 
-%   'skipDirCheck'  - toggle directories generation, default to false (to
-%                     enhance speed if you know that folder already exist)
+%       'skipDirCheck'  
+%           toggle directories generation, default to false (to
+%           enhance speed if you know that folder already exist)
 %
-%   'saveOverwrite' - toggle overwrite, default to false. false will
-%                     prevent re-embedding of embedded images. true will
-%                     embed the entire dataset regardless of anything.
-%                     (when this is false, previous half done job will 
-%                     simply be continued without starting all over again)
+%       'saveOverwrite' 
+%           toggle overwrite, default to false. false will
+%           prevent re-embedding of embedded images. true will
+%           embed the entire dataset regardless of anything.
+%           (when this is false, previous half done job will 
+%           simply be continued without starting all over again)
+%
+%       'executionEnvironment'
+%           hardware selection, default to auto
+%           options: {'gpu', 'cpu', 'auto'}
 %
 %   EXAMPLE:
 %               imdsTrain = imageDatastore(datasetPath, ...
@@ -54,30 +55,14 @@ function precomputeDatabase(imds, outputPath, dlModel, preprocessFunc, batchSize
         config.saveOverwrite (1,1) logical = false;
         config.executionEnvironment (1,:) char {mustBeMember(config.executionEnvironment,["auto","cpu","gpu"])} = "auto"
     end
-
-    %% prepare arguments
-    
-%     skipDirCheck = false;
-%     saveOverwrite = false;
-%     remainingArg = {};
-%     for i = 1:2:length(varargin)
-%         if strcmp(varargin{i},"skipDirCheck")
-%             skipDirCheck = varargin{i+1};
-%         elseif strcmp(varargin{i},"saveOverwrite")
-%             saveOverwrite = varargin{i+1};
-%         else
-%             remainingArg = varargin(i:end);
-%             break
-%         end
-%     end
         
-    %% global variables
-    
+    % total number of images to be embedded    
     imageNum = length(imds.Files);
     
-    %% prepare output file paths and names
+    
+    % prepare output file paths and names
 
-    % e.g. ...{'classfolder'}{'filenames.jpg'}
+    % e.g. ..., {'classfolder'}, {'filenames.jpg'}
     %      'filenames.jpg'
     parts = split(imds.Files, filesep);
     inFilenames = parts(:, end);
@@ -97,14 +82,13 @@ function precomputeDatabase(imds, outputPath, dlModel, preprocessFunc, batchSize
     outputPaths = join([cellOutputPaths,classfolders,outFilenames], filesep);
     
 
-    %% progress bar
-
+    % progress bar
     f = waitbar(0,sprintf("[1/2] Generating Directories\n \n \n "),"Name","Precompute Database",...
         'CreateCancelBtn','setappdata(gcbf,''canceling'',1)');
     setappdata(f,'canceling',0);
 
     
-    %% generate directories and subdirectories
+    % generate directories and subdirectories
     
     if ~config.skipDirCheck
         if ~exist(outputPath,"dir")
@@ -130,7 +114,7 @@ function precomputeDatabase(imds, outputPath, dlModel, preprocessFunc, batchSize
         end        
     end
     
-    %% check if embedding exist
+    % check if embedding exist
     existenceList = false(imageNum,1);
     if ~config.saveOverwrite
         for i = 1:imageNum
@@ -141,7 +125,8 @@ function precomputeDatabase(imds, outputPath, dlModel, preprocessFunc, batchSize
     noEmbedImageNum = length(noEmbedGlobalIndex);
     embedImageNum = imageNum - noEmbedImageNum;
     
-    %% generate embeddings and save it
+    
+    % generate embeddings and save it
     
     % prepare essential batch information and init payload size
     batchNum = ceil(noEmbedImageNum / batchSize);
@@ -154,7 +139,7 @@ function precomputeDatabase(imds, outputPath, dlModel, preprocessFunc, batchSize
     encodedImages = 0;
     savedImages = 0;
     
-%     for batchIndex = startBatchIndex : batchNum
+    
     for batchIndex = 1 : batchNum
 
         % if last batch and last batch size is not zero then make sure the
@@ -212,7 +197,7 @@ function precomputeDatabase(imds, outputPath, dlModel, preprocessFunc, batchSize
         
     end
     
-    delete(f);
+    delete(f); % delete progress bar
     
 end
 

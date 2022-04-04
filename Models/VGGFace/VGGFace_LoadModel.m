@@ -1,6 +1,7 @@
 function model = VGGFace_LoadModel(weights_path)
 % This will load the model in as a dlnetwork
-
+% Information regarding weights can be found in README
+%
 % NOTE:
 % The weights that I'm using here uses conv2d as fully Connected for the 
 % last few layers

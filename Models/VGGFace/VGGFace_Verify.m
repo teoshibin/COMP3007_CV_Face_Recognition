@@ -1,4 +1,23 @@
 function result = VGGFace_Verify(model, batch1, batch2, isEmbedded, similarity_metric)
+% compute dissimilarity values for 2 batches of pair images
+%
+%   model       - dlnetwork model
+%
+%   batch1      - left batch of images
+%
+%   batch2      - right batch of images
+%
+%   isEmbedded  - 1 by 2 vector containing logical values of batch being
+%                 embedded or not, default to [0 0] where both batch1 and 2
+%                 are not embedded
+%
+%   similarity_metric - distance metric for verifying faces 
+%                       options: {'euclidean', 'euclidean_l2', 'cosine'}
+%         
+%   
+%   result      - an array of structs containing fields 
+%                 {distance, similarity_metric, threshold, boolean}
+%
 
     arguments
         model dlnetwork
